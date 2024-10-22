@@ -63,7 +63,7 @@ First, ensure you have an OpenAI account and access to the API, as you’ll need
 Begin by cloning this repository:
 
 ```bash
-git clone https://github.com/Phala-Network/ai-agent-template-langchain.git
+git clone https://github.com/Phala-Network/ai-agent-template-langchain.git ```
 
 
 If you've already cloned it, you’re good to proceed to the next step.
@@ -73,5 +73,43 @@ If you've already cloned it, you’re good to proceed to the next step.
 Next, install the necessary dependencies:
 
 ```bash
+
+If you encounter any issues during installation, run:
+
+bash
+Copy code
+npm audit fix
 npm install
+
+Build Your Agent
+Now, build your agent by running:
+
+bash
+Copy code
+npm run build
+Set OpenAI API Keys
+You’ll need your OpenAI API keys to test the agent. Set your API key in your environment by running the following command (replace Insert your API Keys with your actual API key):
+
+bash
+Copy code
+export OPENAI_API_KEY=Insert your API Keys
+To verify your API key has been set, run:
+
+bash
+Copy code
+echo $OPENAI_API_KEY
+You can use Visual Studio Code or any other IDE and input the API key where needed.
+
+Test Your Agent Locally
+Once everything is set, you can test your AI agent locally by running:
+
+bash
+Copy code
+npm run test
+Influences on Autonomous Agents
+Although AI agents are autonomous in their decision-making processes, they still require goals and environments defined by humans. There are three main influences on the behavior of autonomous agents:
+
+The team of developers who design and train the AI system.
+The team responsible for deployment and user access.
+The user who defines specific goals and provides the tools available for the AI agent.
 
