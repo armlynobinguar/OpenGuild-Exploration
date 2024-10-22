@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Loader2, PlusCircle } from "lucide-react";
 import {
@@ -26,52 +26,53 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useContractProvider } from "./ContractProvider";
 import { InjectedAccount } from "@polkadot/extension-inject/types";
+
+// Define props for the component
 type Props = {};
 
+// Define the form schema using Zod
 const formSchema = z.object({
-  content: z.string().min(3).max(50),
+  content: z.string().min(3).max(500), // Increased max length for notes
 });
 
-type formSchemaType = z.infer<typeof formSchema>;
+// Infer the form schema type
+type FormSchemaType = z.infer<typeof formSchema>;
 
-const AddTodoButton: React.FC<Props> = ({}) => {
+const AddNoteButton: React.FC<Props> = () => {
   const { contract, signer, getActiveAccount } = useContractProvider();
-  const [account, setAccount] = React.useState<InjectedAccount | undefined>(
-    undefined
-  );
+  const [account, setAccount] = useState<InjectedAccount | undefined>(undefined);
   const queryClient = useQueryClient();
-
+  
+  // Dialog open state
   const [isOpen, setIsOpen] = useState(false);
-  const form = useForm<formSchemaType>({
+  
+  // Form setup using react-hook-form
+  const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       content: "",
     },
   });
 
+  // Mutation for adding a note
   const { mutateAsync, isPending } = useMutation({
-    mutationKey: ["add-todo"],
-    mutationFn: async (data: formSchemaType) => {
+    mutationKey: ["add-note"],
+    mutationFn: async (data: FormSchemaType) => {
       if (!account || !contract) return;
-      const { raw } = await contract.query.addTodo(data.content, {
+      const { raw } = await contract.query.addNote(data.content, {
         caller: account.address,
       });
 
       return new Promise((resolve) =>
         contract.tx
-          .addTodo(data.content, {
+          .addNote(data.content, {
             gasLimit: raw.gasRequired,
           })
           .signAndSend(
             account.address,
-            {
-              signer: signer,
-            },
-            async ({ status, events }) => {
-              if (
-                status.type === "BestChainBlockIncluded" ||
-                status.type === "Finalized"
-              ) {
+            { signer },
+            async ({ status }) => {
+              if (status.type === "BestChainBlockIncluded" || status.type === "Finalized") {
                 resolve(data);
               }
             }
@@ -80,26 +81,23 @@ const AddTodoButton: React.FC<Props> = ({}) => {
     },
   });
 
-  function onSubmit(values: formSchemaType) {
+  // Handle form submission
+  const onSubmit = (values: FormSchemaType) => {
     toast.promise(mutateAsync(values), {
-      loading: "Creating todo...",
+      loading: "Creating note...",
       success: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: ["get-todo-list"],
-        });
-
+        await queryClient.invalidateQueries({ queryKey: ["get-note-list"] });
         setIsOpen(false);
         form.reset();
-        return "Todo created successfully";
+        return "Note created successfully";
       },
-      error: "Failed to create todo",
+      error: "Failed to create note",
     });
-  }
+  };
 
-  React.useEffect(() => {
-    getActiveAccount?.().then((acc) => {
-      setAccount(acc);
-    });
+  // Fetch active account on component mount
+  useEffect(() => {
+    getActiveAccount?.().then(setAccount);
   }, [getActiveAccount]);
 
   return (
@@ -107,14 +105,14 @@ const AddTodoButton: React.FC<Props> = ({}) => {
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="w-5 h-5 mr-2" />
-          Add Todo
+          Add Note
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create new todo</DialogTitle>
+          <DialogTitle>Create new note</DialogTitle>
           <DialogDescription>
-            Input the content of your new todo.
+            Input the content of your new note.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -126,15 +124,14 @@ const AddTodoButton: React.FC<Props> = ({}) => {
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="todo" {...field} />
+                    <Textarea placeholder="Write your note here..." {...field} />
                   </FormControl>
-
                   <FormMessage />
                 </FormItem>
               )}
             />
             <div className="flex justify-end gap-2 items-center">
-              <Button variant={"ghost"} onClick={() => setIsOpen(false)}>
+              <Button variant="ghost" onClick={() => setIsOpen(false)}>
                 Close
               </Button>
               <Button type="submit" disabled={isPending}>
@@ -149,4 +146,4 @@ const AddTodoButton: React.FC<Props> = ({}) => {
   );
 };
 
-export default AddTodoButton;
+export default AddNoteButton; // Updated export name

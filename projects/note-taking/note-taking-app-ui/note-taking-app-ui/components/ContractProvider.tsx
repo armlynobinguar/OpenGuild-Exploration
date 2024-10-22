@@ -61,10 +61,18 @@ const ContractProvider: React.FC<
   const injectedWindow = window as Window & InjectedWindow;
 
   // Get subwallet-js injected provider to connect with SubWallet
-  const provider: InjectedWindowProvider =
-    injectedWindow.injectedWeb3["subwallet-js"];
+  let provider: InjectedWindowProvider | undefined;
+  
+  if (injectedWindow && injectedWindow.injectedWeb3) {
+    provider = injectedWindow.injectedWeb3["subwallet-js"];
+  }
 
   const connectToSubWallet = useCallback(async () => {
+    if (!provider) {
+      console.error("SubWallet provider is not available.");
+      return;
+    }
+
     // Connect with SubWallet from the dapp
     const injected: Injected = await provider.enable!("Todo Dapp");
     setInjected(injected);
@@ -73,13 +81,11 @@ const ContractProvider: React.FC<
   const getConnectedAccounts = async () => {
     if (!injected) return [];
     const accounts: InjectedAccount[] = await injected.accounts.get();
-    // console.log('Accounts:', accounts);
     return accounts;
   };
 
   const getActiveAccount = async () => {
     const accounts = await getConnectedAccounts();
-    // console.log('Accounts:', accounts);
     return accounts[0];
   };
 
@@ -117,8 +123,7 @@ const ContractProvider: React.FC<
     if (autoConnect) {
       connectToSubWallet();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [InitClient]);
+  }, [InitClient, autoConnect, connectToSubWallet]);
 
   return (
     <ContractContext.Provider

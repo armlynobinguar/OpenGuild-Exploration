@@ -1,8 +1,9 @@
+// layout.tsx
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import AppProvider from "@/components/AppProvider";
+import NoteTakingProvider from "@/components/NoteTakingProvider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -10,8 +11,8 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "Todo Dapp with ink! contract",
-  description: "A simple todo dapp with ink! contract",
+  title: "Note Taking App",
+  description: "A simple note-taking app built with Next.js",
 };
 
 export default function RootLayout({
@@ -23,15 +24,20 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "min-h-screen bg-gray-100 font-sans antialiased",
           fontSans.variable
         )}
       >
-        <AppProvider>
+        <NoteTakingProvider>
+          <header className="bg-white shadow">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <h1 className="text-3xl font-bold text-gray-900">Note Taking App</h1>
+            </div>
+          </header>
           <main className="flex min-h-screen flex-col px-4 sm:px-6 lg:px-8 py-5 max-w-7xl mx-auto">
             {children}
           </main>
-        </AppProvider>
+        </NoteTakingProvider>
       </body>
     </html>
   );
