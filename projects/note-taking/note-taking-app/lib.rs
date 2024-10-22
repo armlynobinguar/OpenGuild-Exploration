@@ -1,141 +1,155 @@
+//! # Note Taking App
+//! This is a simple note taking app smart contract that allows users to add and retrieve notes.
+
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 #[ink::contract]
-mod note_taking_app {
+mod note_app {
+    use ink::prelude::string::String;
+    use ink::storage::Mapping;
 
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
+    /// Defines the storage of your contract for notes.
+    #[derive(Default, Clone)]
+    #[ink::scale_derive(Encode, Decode, TypeInfo)]
+    #[cfg_attr(feature = "std", derive(ink::storage::traits::StorageLayout))]
+    pub struct Note {
+        pub id: u64,
+        pub content: String,
+        pub completed: bool,
+    }
+
     #[ink(storage)]
-    pub struct NoteTakingApp {
-        /// Stores a single `bool` value on the storage.
-        value: bool,
+    #[derive(Default)]
+    pub struct NoteApp {
+        notes: Mapping<(AccountId, u64), Note>,
+        counter: Mapping<AccountId, u64>,
     }
 
-    impl NoteTakingApp {
-        /// Constructor that initializes the `bool` value to the given `init_value`.
+    impl NoteApp {
         #[ink(constructor)]
-        pub fn new(init_value: bool) -> Self {
-            Self { value: init_value }
+        pub fn new() -> Self {
+            Self {
+                notes: Mapping::default(),
+                counter: Mapping::default(),
+            }
         }
 
-        /// Constructor that initializes the `bool` value to `false`.
-        ///
-        /// Constructors can delegate to other constructors.
-        #[ink(constructor)]
-        pub fn default() -> Self {
-            Self::new(Default::default())
-        }
-
-        /// A message that can be called on instantiated contracts.
-        /// This one flips the value of the stored `bool` from `true`
-        /// to `false` and vice versa.
         #[ink(message)]
-        pub fn flip(&mut self) {
-            self.value = !self.value;
+        pub fn add_note(&mut self, content: String) {
+            let caller = self.env().caller();
+            let id = self.counter.get(caller).unwrap_or_default();
+
+            let note = Note {
+                id,
+                content,
+                completed: false,
+            };
+            self.notes.insert((caller, id), &note);
+
+            let next_id = id.checked_add(1).unwrap();
+            self.counter.insert(caller, &next_id);
         }
 
-        /// Simply returns the current value of our `bool`.
         #[ink(message)]
-        pub fn get(&self) -> bool {
-            self.value
+        pub fn toggle_note(&mut self, id: u64) -> bool {
+            let caller = self.env().caller();
+            let note = self.notes.get((caller, id)).unwrap();
+            let mut note = note.clone();
+            note.completed = !note.completed;
+            self.notes.insert((caller, id), &note);
+            note.completed
+        }
+
+        #[ink(message)]
+        pub fn get_note(&self, id: u64) -> Option<Note> {
+            let caller = self.env().caller();
+            Some(self.notes.get((caller, id)).unwrap())
+        }
+
+        #[ink(message)]
+        pub fn get_counter(&self, account_id: AccountId) -> u64 {
+            self.counter.get(account_id).unwrap_or_default()
         }
     }
 
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
+    /// Unit tests for the Note App contract.
     #[cfg(test)]
     mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
         use super::*;
 
-        /// We test if the default constructor does its job.
         #[ink::test]
-        fn default_works() {
-            let note_taking_app = NoteTakingApp::default();
-            assert_eq!(note_taking_app.get(), false);
+        fn init_works() {
+            let accounts = ink::env::test::default_accounts::<ink::env::DefaultEnvironment>();
+
+            let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
+            ink::env::test::set_callee::<ink::env::DefaultEnvironment>(contract);
+            ink::env::test::set_caller::<ink::env::DefaultEnvironment>(accounts.alice);
+
+            let note_app = NoteApp::default();
+            assert_eq!(note_app.get_counter(accounts.alice), 0);
         }
 
-        /// We test a simple use case of our contract.
         #[ink::test]
-        fn it_works() {
-            let mut note_taking_app = NoteTakingApp::new(false);
-            assert_eq!(note_taking_app.get(), false);
-            note_taking_app.flip();
-            assert_eq!(note_taking_app.get(), true);
-        }
-    }
+        fn add_note_works() {
+            let accounts = ink::env::test::default_accounts::<ink::env::DefaultEnvironment>();
 
+            let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
+            ink::env::test::set_callee::<ink::env::DefaultEnvironment>(contract);
+            ink::env::test::set_caller::<ink::env::DefaultEnvironment>(accounts.alice);
 
-    /// This is how you'd write end-to-end (E2E) or integration tests for ink! contracts.
-    ///
-    /// When running these you need to make sure that you:
-    /// - Compile the tests with the `e2e-tests` feature flag enabled (`--features e2e-tests`)
-    /// - Are running a Substrate node which contains `pallet-contracts` in the background
-    #[cfg(all(test, feature = "e2e-tests"))]
-    mod e2e_tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
+            let mut note_app = NoteApp::default();
 
-        /// A helper function used for calling contract messages.
-        use ink_e2e::ContractsBackend;
+            note_app.add_note("Meeting notes for project X".to_string());
 
-        /// The End-to-End test `Result` type.
-        type E2EResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+            assert_eq!(note_app.get_counter(accounts.alice), 1);
 
-        /// We test that we can upload and instantiate the contract using its default constructor.
-        #[ink_e2e::test]
-        async fn default_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
-            // Given
-            let mut constructor = NoteTakingAppRef::default();
+            let note = note_app.notes.get(&(accounts.alice, 0)).unwrap();
 
-            // When
-            let contract = client
-                .instantiate("note_taking_app", &ink_e2e::alice(), &mut constructor)
-                .submit()
-                .await
-                .expect("instantiate failed");
-            let call_builder = contract.call_builder::<NoteTakingApp>();
-
-            // Then
-            let get = call_builder.get();
-            let get_result = client.call(&ink_e2e::alice(), &get).dry_run().await?;
-            assert!(matches!(get_result.return_value(), false));
-
-            Ok(())
+            assert_eq!(note.id, 0);
+            assert_eq!(note.content, "Meeting notes for project X".to_string());
+            assert_eq!(note.completed, false);
         }
 
-        /// We test that we can read and write a value from the on-chain contract.
-        #[ink_e2e::test]
-        async fn it_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
-            // Given
-            let mut constructor = NoteTakingAppRef::new(false);
-            let contract = client
-                .instantiate("note_taking_app", &ink_e2e::bob(), &mut constructor)
-                .submit()
-                .await
-                .expect("instantiate failed");
-            let mut call_builder = contract.call_builder::<NoteTakingApp>();
+        #[ink::test]
+        fn toggle_note_works() {
+            let accounts = ink::env::test::default_accounts::<ink::env::DefaultEnvironment>();
 
-            let get = call_builder.get();
-            let get_result = client.call(&ink_e2e::bob(), &get).dry_run().await?;
-            assert!(matches!(get_result.return_value(), false));
+            let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
+            ink::env::test::set_callee::<ink::env::DefaultEnvironment>(contract);
+            ink::env::test::set_caller::<ink::env::DefaultEnvironment>(accounts.alice);
 
-            // When
-            let flip = call_builder.flip();
-            let _flip_result = client
-                .call(&ink_e2e::bob(), &flip)
-                .submit()
-                .await
-                .expect("flip failed");
+            let mut note_app = NoteApp::default();
 
-            // Then
-            let get = call_builder.get();
-            let get_result = client.call(&ink_e2e::bob(), &get).dry_run().await?;
-            assert!(matches!(get_result.return_value(), true));
+            note_app.add_note("Meeting notes for project X".to_string());
 
-            Ok(())
+            let note = note_app.notes.get(&(accounts.alice, 0)).unwrap();
+
+            assert_eq!(note.completed, false);
+
+            note_app.toggle_note(0);
+
+            let note = note_app.notes.get(&(accounts.alice, 0)).unwrap();
+
+            assert_eq!(note.completed, true);
+        }
+
+        #[ink::test]
+        fn get_note_works() {
+            let accounts = ink::env::test::default_accounts::<ink::env::DefaultEnvironment>();
+
+            let contract = ink::env::account_id::<ink::env::DefaultEnvironment>();
+            ink::env::test::set_callee::<ink::env::DefaultEnvironment>(contract);
+            ink::env::test::set_caller::<ink::env::DefaultEnvironment>(accounts.alice);
+
+            let mut note_app = NoteApp::default();
+
+            note_app.add_note("Meeting notes for project X".to_string());
+
+            let note = note_app.get_note(0).unwrap();
+
+            assert_eq!(note.id, 0);
+            assert_eq!(note.content, "Meeting notes for project X".to_string());
+            assert_eq!(note.completed, false);
         }
     }
 }
