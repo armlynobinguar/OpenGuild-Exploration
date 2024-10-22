@@ -68,4 +68,49 @@ git clone https://github.com/Phala-Network/ai-agent-template-langchain.git
 
 This is how it looks like:
 
+![Installation](https://github.com/armlynobinguar/OpenGuild-Polkadot-Open-Source-Contribution/blob/main/images/article-1/installation.jpg)
+
+If in case, you already cloned it. You’re good to go on the next step.
+
+## Install dependencies
+
+```bash
+npm install
+```
+
+From here, it does make sure that the dependencies is install on your end. If you encounter any issues do type this:
+
+```bash
+ npm audit fix
+```
+
+Build your Agent
+
+```bash
+npm run build
+```
+
+Following to that part is testing you AI Agent using the OpenAI API keys you have provided. If in case you do encounter issue make sure to do this:
+
+## OpenAI API Keys
+
+```bash
+echo $OPENAI_API_KEY
+```
+
+## Set Your Environment
+
+```bash
+export OPENAI_API_KEY=Insert your API Keys
+```
+
+You can use your Visual Studio Code or any IDE and do use this with your API Keys.
+
+Test your Agent locally
+
+```bash
+npm run test
+```
+
+Now once, these are all finished. You may now be able to test it out to see how it works.
 
