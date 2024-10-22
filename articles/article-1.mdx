@@ -29,7 +29,7 @@ This directive method relies on the child's existing knowledge of chess to antic
 
 Imagine that child competing against players from different areas; each opponent may employ tactics and moves the child hasn’t encountered. This situation requires the child to understand the chess [environment] thoroughly and take [actions] based on the [responses] of their opponents.
 
-![AI Agent](./images/article-1/ai-agent.png)
+![AI Agent](https://github.com/armlynobinguar/OpenGuild-Polkadot-Open-Source-Contribution/blob/main/images/article-1/General-workflow-of-AI-agent-Typically-an-AI-agent-consists-of-three-components.png)
 
 
 ## AI Agents in Web3 Environment
@@ -38,7 +38,7 @@ So, how do AI agents work in a Web3 environment?
 
 Let’s first introduce **Phala Network**, a platform that serves as an execution layer for Web3 AI. By enabling AI to understand and interact with blockchains, developers can now build, launch, use, and profit from their agents with built-in security guarantees. Phala's AI Agent Contract provides an ideal toolset for creating intelligent applications.
 
-![Phala Network](https://path_to_image/phala_network.png)
+![Phala Network](https://github.com/armlynobinguar/OpenGuild-Polkadot-Open-Source-Contribution/blob/main/images/article-1/phala-network.jpg)
 
 Learning about Web3 can initially seem complex, as it requires foundational knowledge to build your first decentralized applications (dApps). For those unfamiliar, dApps are the decentralized counterparts to the apps we typically use, operating on a decentralized server instead of a centralized one.
 
@@ -64,3 +64,64 @@ Begin by cloning this repository:
 
 ```bash
 git clone https://github.com/Phala-Network/ai-agent-template-langchain.git
+```
+
+This is how it looks like:
+
+![Installation](https://github.com/armlynobinguar/OpenGuild-Polkadot-Open-Source-Contribution/blob/main/images/article-1/installation.jpg)
+
+If in case, you already cloned it. You’re good to go on the next step.
+
+## Install dependencies
+
+```bash
+npm install
+```
+
+From here, it does make sure that the dependencies is install on your end. If you encounter any issues do type this:
+
+```bash
+ npm audit fix
+```
+
+Build your Agent
+
+```bash
+npm run build
+```
+
+Following to that part is testing you AI Agent using the OpenAI API keys you have provided. If in case you do encounter issue make sure to do this:
+
+## OpenAI API Keys
+
+```bash
+echo $OPENAI_API_KEY
+```
+
+## Set Your Environment
+
+```bash
+export OPENAI_API_KEY=Insert your API Keys
+```
+
+You can use your Visual Studio Code or any IDE and do use this with your API Keys.
+
+Test your Agent locally
+
+```bash
+npm run test
+```
+
+Now once, these are all finished. You may now be able to test it out to see how it works.
+
+Although AI agents are autonomous in their decision-making processes, they still require goals and environments defined by humans. There are three main influences on the behavior of autonomous agents:
+
+- The team of developers who design and train the AI system.
+
+- The team responsible for deploying the agent and providing user access.
+
+- The user who defines specific goals for the AI agent to accomplish and establishes the tools available for its use.
+
+Given the user’s goals and the agent’s available tools, the AI agent performs task decomposition to enhance performance. Essentially, the agent creates a plan consisting of specific tasks and subtasks to achieve the complex goal.
+
+For simple tasks, planning may not be necessary. Instead, an agent can iteratively reflect on its responses and improve them without needing to plan its next steps.
